@@ -1,0 +1,205 @@
+\cohort 4
+\Level 2: INTRODUCING ODORS
+\Mouse placed in cage-> house light on for 5 seconds-> nose poke hold for300 ms-> ODOR (APPLE) RELEASE-> NP LIGHT TURNS ON 100 MS LATER
+\Enter Rrewared port for SUCROSE water dispense-> 100 correct or 7200 secodnds deadline
+\PUNISHMENT FOR DOUBLE NP IS ITI
+
+\Nose poke hold set to resolution of 10 ms
+
+
+\SS1:SET UP STAIRCASING (Z6) AND BLOCKS
+\SS2 - ENTRY MONITER AND RECORDS DURATION OF NP HOLDS
+\ss3: MAIN LOOP
+\SS4: ODOR
+\ss5: REWARD
+\SS6: ITI
+\SS7: SESSION TIMER
+\SS8: END OF SESSION BY TIME
+\SS10: TONE
+
+\Inputs
+^LPORT=1
+^np = 2
+^RPORT=3
+
+
+\Outputs
+^NPLight =1
+^HouseLight=2
+^HouseTone=3
+^RReward=4
+^LREWARD=5
+^Odor1=9
+^Air=8 \Air flow in to the box
+^Vac= 20   \pulls odor out of box
+
+\A= NP HOLD COUNTER (RESET)
+\B= NP LIGHT TIMESTAMP ((LIST BY TRIAL (M(1)))
+\C= REWARDS RESPONSES
+    \C(1)= COLLECTED
+    \C(2)= NO C
+\D=  NP DURATION (LIST BY TRIAL (M(1)))
+\E= ENTRY TIME STAMP (LIST BY INITIATIONS)
+\F= FLAG FOR IN TRIAL (2), OR IN ITI (3)
+\G= RESPONSE CATEGORIZATION (1= COLLECTED) (2= WRONG PORT) (3= DOUBLE NP) (4= NO COLLECTION)((LIST BY TRIAL (M(1)))
+\H=
+\I= INDEX (ENTRY INDEX)
+\J= NP ENTRY TIMESTAMP ((LIST BY TRIAL (M(1)))
+\K=REWARD ENTRY TIMESAMP ((LIST BY TRIAL (M(1)))
+\L= LEAVING TIME STAMP
+\M= TRIAL OPPORTUNITIES
+    \M(1)= TRIAL COUTNER
+    \M(2)= INITATIONS
+    \M(3)= SUCCESSFUL INITITATIONS
+    \M(4)= OUT OF TRIAL NP
+\N=
+\O= ODOR TIMESTAMP ((LIST BY TRIAL (M(1)))
+\P= PORT IDENTIFIER (1=NP,2= left REWARD PORT, 3= RIGHT REWARD PORT)
+\Q= RECORDING IF RESPONSE WAS IN TRIAL (2) OR NOT (1)
+\R=
+\S=
+\T= TIMER
+\U=
+\v= ODOR GIVEN FLAG
+\W= ARRAY THAT TRACKS IF EACH INITIATION WAS THE REQUIRED HOLD LENGTH
+\X= STATS
+    \X(1)= AVERAE NP DURATION
+    \X(2)= % OF SUCCESSFUL INITIATIONS OUT OF ALL INITIATIONS
+    \X(3)= % OF SUCCESSFUL INITIATIONS OUT OF ALL TRIAL OPPORTUNITIES
+    \X(4)= % OF TRIALS MOUSE INITIATED ON
+
+\Y= START OF ITI TIMESTAMP (LIST
+
+\Z1= MAIN LOOP
+\Z2=
+\Z3=
+\Z4= odor delivery
+\Z5= REWARD
+\z6=
+\z7= ITI
+\z8= NP LIGHT
+\Z9= END PROGRAM
+
+DIM B= 500
+DIM P= 1000
+DIM E= 1000
+DIM L=1000
+DIM D= 1000
+DIM O= 500
+DIM J= 500
+DIM G= 500
+DIM Q= 1000
+DIM Y= 500
+DIM X=500
+DIM I= 5
+DIM M=5
+DIM K= 500
+DIM H= 500
+DIM W= 1000
+
+S.S.1, \ENTRY MONITER (at any point collectes timestamps and duration)
+ S1,
+    #START ---> S2
+ S2,
+    #R^NP: SET P(I(1))=1;  SET E(I(1))=T;   SET Q(I(1))= F; --->S4
+    #R^RPORT: SET P(I(1))=3; SET E(I(1))=T; SET Q(I(1))= F; ---> S3
+    #R^lPORT: SET P(I(1))=2; SET E(I(1))=T; SET Q(I(1))= F; ---> S3
+ S3,
+    #R^RPORT:---> S3
+    #R^lPORT: ---> S3
+    0.01": SET L(I(1))=T; ADD I(1)---> S2
+S4,
+   #R^NP: --->S4
+   0.01": SET L(I(1))=T; SET D(M(1))=(L(I(1))-E(I(1))); ADD I(1)---> S2
+
+
+S.S.2, \MAIN LOOP
+ S1,
+   #START:ON^Houselight; ON^AIR; SET I(2)=0; SET I(1)=0; SET F=3; SET A=0; SET I(3)=0 --->S2
+ S2,
+
+   5": OFF^HOUSELIGHT; Z1 ---> S3
+ \ MAIN LOOP (and hold requirement met before turning on release light and sending to reward tracking (z5). if hold not long enough send to ITI (z7))
+  S3,
+    #Z1: SET F=1; set a=0;SET v= 2; ADD M(1) ---> S4
+  S4,
+    #R^NP: ADD M(2); SET J(M(1))= T ---> S5
+ S5, \  HOLD REQUIREMENT
+    #R^NP: ADD A; IF A = 30[@TRUE, @FALSE]
+       @TRUE: z4; Z8---> S5
+       @FALSE: ---> Sx
+    0.01":  If A < 39 [@TRUE, @False]
+            @true: Z7 ;  --->s1
+            @False:ADD M(3); z5---> s1
+
+
+S.S.3 \ odor delivery (Use V flag to make sure odor hasnt already been deliverd, then presents odor)
+s1,
+   #z4:if v=1 [@true, @false]
+         @true:---> s1
+         @false: Z8; OFF^AIR; ON^ODOR1; SET O(M(1))=T; ADD R; SHOW 4, APPLE, R; SET V=1 ---> S2
+S2,
+   0.5":OFF^ODOR1; ON^AIR---> S1
+
+S.S.4 \ TURN ON NP LIGHT FOR 1 SEC
+S1,
+#Z8: ---> S2
+s2,
+0.1":  ON^NPLight; SET B(M(1))=T ---> S3
+S3,
+   1": OFF^NPLight; ---> S1
+
+S.S.5 \REWARD (if mouse is correct, give reward, if wrong DO NOTHING, if they re-enter the NP sent to ITI, if they dont collect in 10 seconds send to ITI)
+S1,
+   #Z5: SET F=2 ---> S2
+S2,
+   #R^RPORT:SET K(M(1))=T ;ON^RREWARD; ADD C; SET G(M(1))=1; SHOW 6, COLLECTED, c; Z7 ---> S3
+   #R^LPORT: SET G(M(1))=2; Z7 ---> S3
+   #R^NP: SET G(M(1))=3; Z7 ---> s1
+   10":Z7; SET G(M(1))= 4 ---> S1
+S3,
+   1": OFF^RREWARD  ---> S1
+
+
+S.S.6 \  ITI (after ITI calculate if at the end of a block, if so return to scent selection (z1) if not return to beginning of main loop (z2))
+ S1,
+    #Z7: SET F=3; ON^HOUSELIGHT; SET Y(M(1))=T; ON^VAC; OFF^AIR ---> S2
+S2,
+   5": OFF^VAC;OFF^HOUSELIGHT; ON^AIR; ADD I(2)---> s3
+S3,
+  0.01":If C=100[@TRUE,@FALSE]
+            @TRUE:  Z9---> S1
+           @FALSE : Z1 ---> s1
+
+S.S.7, \ SESSION TIMER
+S1,
+#START: SET T=0---> S2
+S2,
+0.01": SET T=T+0.01; SHOW 1, SESSION TIMER, T---> SX
+
+S.S.8, \END OF SESSION BY TIME (end after 1.5 hours, and calculate accuracy)
+S1,
+#START: ---> S2
+S2,
+120':Z9 ---> S1
+
+
+S.S.9, \Checks for activity, stops session if none in 20 minutes
+S1,
+#START:--->S2
+S2,
+#R^NP:--->S2
+20': Z9 --->S1
+
+
+S.S.10
+S1,
+#Z9: SET P(I(1))=-987.987; SET L(I(1))= -987.987; SET E(I(1))= -987.987;
+  SET D(I(1))= -987.987; SET Q(I(1))= -987.987; SET G(M(1))= -987.987; SET Y(M(2))= -987.987;
+  SET O(I(1))= -987.987;SET J(I(1))= -987.987; SET B(I(1))= -987.987; ;SET O(I(1))= -987.987;SET K(I(1))= -987.987; ---> S2
+
+S2,
+0.01": ARITHMETICMEAN X(1) = O,1,500 ; SET X(2)= M(3)/M(2); SET X(3)= M(3)/ M(1); SET X(4)= M(2)/M(1) ---> S3
+S3,
+10": ---> STOPSAVE
+
