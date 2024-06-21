@@ -1,0 +1,65 @@
+\MED-PC  Code for Automated Attentional Set Shift Task  (AASST)
+\Training level 1-1B
+\Mice receives reward from the left reward port, right reward port is covered
+\Center port flashes for 500ms as reward is released
+\Mice are given 5 seconds to collect the reward
+\Session timer is set to 45 minutes OR 50 reward collections
+
+\INPUTS
+^left_NP = 1
+^center_NP = 2
+^right_NP = 3
+
+\OUTPUTS
+^center_port_light = 1
+^house_light = 2
+^house_tone = 3
+^right_reward = 4
+^left_reward = 5
+
+\Variables
+\C = Rewards collected counter
+\D = Response time latency (center nosepoke flash to collection)
+\E = enter nosepoke for collection time stamp
+\G = Rewards given counter
+\I = Trial index (subscript of arrays)
+\M = Number of missed trials counter (reward was not collected/trial was ignored)
+\S = stimulus presentation time stamp (center nose pose flash)
+\T = Session timer
+\Z1 = Restart main loop
+
+DIM E = 999
+DIM S = 999
+DIM D = 999
+
+S.S.1,                                         \Start & Main loop
+S1,
+    #START: Z1 ---> S2
+S2,
+    #Z1: ADD I; SHOW 2, Trial, I; ON^house_light ---> S3
+S3,                                             \First trial becomes available
+    5": OFF^house_light; ON^center_port_light; SET S(I) = T; ADD G; SHOW 3, Rewards given, G ---> S4
+S4,
+    0.25": OFF^center_port_light; ON^left_reward ---> S5
+S5,
+    0.75": OFF^left_reward; Z2 ---> S2
+
+S.S.2,                                         \Response tracker for collections
+S1,
+    #Z2: ---> S2
+S2,
+    #R^left_NP: SET E(I) = T; SET D(I) = E(I) - S(I); ADD C; SHOW 4, Rewards Collected, C; IF C = 50[@TRUE, @FALSE]
+        @TRUE: ON^house_light ---> STOPSAVE
+        @FALSE: Z1 ---> S1
+
+    15": ADD M; SHOW 5, Missed response, M; Z1 ---> S1
+
+S.S.3,                                        \Session timer
+S1,
+    #START: SET A = 3600 ---> S2
+S2,
+    0.01": SET T = T + 0.01; SHOW 1, Session Timer, T; IF T >= A [@TRUE,@FALSE]
+        @TRUE:  IF I > 1000[@TRUE,@FALSE]
+            @TRUE: ---> SX
+            @FALSE: SET D(I) = -987.987; SET E(I) = -987.987; SET S(I) = -987.987---> STOPSAVE
+        @FALSE: ---> SX

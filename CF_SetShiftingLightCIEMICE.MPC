@@ -1,0 +1,488 @@
+\MED-PC Code updated as of 05032024
+\Version 4: Attentional Set shifting, starting with light stimuli
+\Starts on simple discrimination (SD), then compound discimination (CD), then intradimensional shift (ID), then extradimensional shift (ED),
+\and continues in this fashion between ID and ED
+\
+\Criterion for proficiency is 6/8 trials
+\Latest update included updated commenting and descriptions of variables for better readability
+
+
+
+\INPUTS
+^left_NP = 1
+^center_NP = 2
+^right_NP = 3
+
+\OUTPUTS
+^center_port_light = 1
+^house_light = 2
+^house_tone = 3
+^right_reward = 4
+^left_reward = 5
+^white_audio = 13
+^blue_audio = 14
+^green_audio = 15
+^orange_audio = 16
+^red_light = 17
+^yellow_light = 18
+^green_light = 19
+^blue_light = 21
+^white_light = 22
+^purple_light = 23
+
+\Variables
+DIM A = 6
+\A(0) = Dynamic var for Z(A(0)), left random light stimulus
+\A(1) = Dynamic var for Z(A(1)), left random sound stimulus
+\A(2) = Dynamic var for Z(A(2)), right random light stimulus
+\A(3) = Dynamic var for Z(A(3)), right random sound stimulus
+\A(4) = 14; for acccuracy counter
+\A(5) = 10; for accuracy counter
+\A(6) = 5400; for session timer
+
+\C(I) = Leaving timestamp for latency calculations
+DIM C = 999
+
+\D(I) = Latency calculator
+DIM D = 999
+
+\E(I) = Stimulus presentation timestamp for latency calculations
+DIM E = 999
+
+
+\F(I) = randomizer for stimulus pair trigger
+DIM F = 999
+
+\G = Total correct responses/rewards given counter
+    \G(0) = Correct responses (total)
+    \G(1) = Correct responses/rewards given left
+    \G(2) = Correct responses/rewards given right
+DIM G = 2
+
+\H(I) = Trial by trial response classification
+    \H(I) = 1; Correct responses on CD (when v=0)
+    \H(I) = 2; Incorrect response on CD (when v=0)
+    \H(I) = 3; Correct responses on ID1 (when v=1)
+    \H(I) = 4; Incorrect response on ID1 (when v=1)
+    \H(I) = 5; Correct response on ED1 (when v=2)
+    \H(I) =6; Incorrect response on ED1 (when v=2)
+    \H(I) =7; Correct response on ID2 (when v=3)
+    \H(I) =8; Incorrect response on ID2 (when v=3)
+    \H(I) = 9; Correct response on ED2 (when v=4)
+    \H(I) = 10; Incorrect response on ED2 (when v=4)
+    \H(I) = 11; Correct response on ID3 (when v=5)
+    \H(I) = 12; Incorrect response on ID3 (when v=5)
+    \H(I) = 13; Correct response on ED3 (when v=6)
+    \H(I) = 14; Incorrect response on ED3 (when v=6)
+    \H(I) = 15; Correct response on ID4 (when v=7)
+    \H(I) = 16; Incorrect response on ID4 (when v=7)
+DIM H = 999
+
+\I = Trial index counter
+
+\J(I) =1, left reward port-sound trials
+\J(I) = 2, left reward port-light trials
+DIM J = 999
+
+\K(I) = Response classification counter used for moving accuracy calculation
+    \K =0; No response
+    \K= 1; Incorrect response
+    \K= 2; Correct response
+DIM K = 999
+
+\L(I) = Light stimulus identifier
+    \L(I) = 1; red light;
+    \L(I) = 2; yellow light;
+    \L(I) = 3; green light;
+    \L(I) = 4; blue light;
+    \L(I) = 5; white light;
+    \L(I) = 6; purple light;
+DIM L = 999
+
+\M = no response counter (missed trial)
+
+\N = No trial initiation counter
+
+\O(I) = 1, right reward port-sound trials
+\O(I) = 2, right reward port-light trials
+DIM O = 999
+
+\P = Number of stimuli trials on on current attentional set
+DIM P = 2
+\P(0) = Current trial to start summation from
+\P(1) = Last (8th) trial to sum
+
+\Q = Accuracy counter
+    \Q(0) = Sum array accuracy
+    \Q(1) = Nuumber of stimuli trials on current attentional set
+DIM Q = 2
+
+\R(I) = Trial-by-trial type
+    \R = 1, Attend to sound
+    \R = 2, Attend to light
+DIM R = 999
+\S(I) = Sound stimulus identifier
+    \S(I) = 1; 2 kHz sound;
+    \S(I) = 2; 5 kHz sound;
+    \S(I) = 3; 12 kHz sound;
+    \S(I) = 4; 9 kHz sound;
+    \S(I) = 5; 15 kHz sound;
+    \S(I) = 6; 20 kHz sound;
+DIM S = 999
+
+\T = Session timer
+
+\V = Set shifting counter (# times accuracy is achieved)
+
+\W = incorrect response
+    \W(0) = Incorrect response (total)
+    \w(1) = Incorrect response (left)
+    \W(2) = Incorrect response (right)
+DIM W = 2
+
+
+
+LIST B = 3,5,7 \left lights
+LIST X = 4,6,8   \right lights
+LIST U = 9,11,13 \left sounds
+LIST Y = 10,12,14 \right sounds
+
+LIST Z = 1,2,3,4
+
+
+\SHOW 1 is timer, SHOW 2 is trial index, SHOW 3 is no initiations, SHOW 4 is rewards given (correct responses), SHOW 5 is incorrect responses, show 6 no response after stim (missed response)
+\NEED TO MAKE AN ARRAY OF STIMULUS
+S.S.1,                                 \Start program, initialize variables, loop
+S1,
+    #START: Z1 ---> S2
+S2,                                         \First trial becomes available
+    #Z1: ON^house_light; ADD I; SHOW 2, Trial Index, I; SET R(I) = 2; SET V=0; SET A(4)= 14; SET A(5)= 8; ADD Q(1) ---> S3
+S3,
+    5": OFF^house_light ---> S4
+S4,
+    #R^center_NP: Z2 ---> S2
+    10": ADD N; SHOW 3, No initiations, N; Z1 ---> S2
+
+
+S.S.2,                                        \First stimulus randomization only
+S1,
+    #Z2: RANDD A(0) =B; RANDD A(1) = U; RANDD A(2) = X; RANDD A(3) = Y; Z21 ---> SX
+
+S.S.3,                                    \red light stimulus (L)
+S1,
+    #Z3: ON^red_light; SET E(I) = T; SET L(I) = 1;
+    IF R(I)=2[@TRUE,@FALSE]
+        @TRUE: SET J(I) = 2 ---> S2
+        @FALSE: ---> S2
+S2,
+    0.5": OFF^red_light; Z15 ---> S1
+
+S.S.4,                                    \yellow light stimulus (R)
+S1,
+    #Z4: ON^yellow_light; SET E(I) = T; SET L(I) = 2;
+    IF R(I)=2[@TRUE,@FALSE]
+        @TRUE: SET O(I) = 2 ---> S2
+        @FALSE: ---> S2
+S2,
+    0.5": OFF^yellow_light; Z16 ---> S1
+
+S.S.5,                                    \green light stimulus (L)
+S1,
+    #Z5: ON^green_light; SET E(I) = T; SET L(I) = 3;
+    IF R(I)=2[@TRUE,@FALSE]
+        @TRUE: SET J(I) = 2 ---> S2
+        @FALSE: ---> S2
+S2,
+    0.5": OFF^green_light; Z15 ---> S1
+
+S.S.6,                                    \blue light stimulus (R)
+S1,
+    #Z6: ON^blue_light; SET E(I) = T; SET L(I) = 4;
+    IF R(I)=2[@TRUE,@FALSE]
+        @TRUE: SET O(I) = 2 ---> S2
+        @FALSE:  ---> S2
+S2,
+    0.5": OFF^blue_light; Z16 ---> S1
+
+S.S.7,                                    \white light stimulus (L)
+S1,
+    #Z7: ON^white_light; SET E(I) = T; SET L(I) = 5;
+    IF R(I)=2[@TRUE,@FALSE]
+        @TRUE: SET J(I) = 2 ---> S2
+        @FALSE: ---> S2
+S2,
+    0.5": OFF^white_light; Z15 ---> S1
+
+S.S.8,                                    \purple light stimulus (R)
+S1,
+    #Z8: ON^purple_light; SET E(I) = T; SET L(I) = 6;
+    IF R(I)=2[@TRUE,@FALSE]
+        @TRUE: SET O(I) = 2 ---> S2
+        @FALSE: ---> S2
+S2,
+    0.5": OFF^purple_light; Z16 ---> S1
+
+S.S.9,                                                                                  \2kHz stimulus (L)
+S1,
+    #Z9: ON^white_audio; ON^blue_audio; SET S(I) = 1;
+    IF R(I)=1[@TRUE,@FALSE]
+        @TRUE: SET J(I) = 1 ---> S2
+        @FALSE: ---> S2
+S2,
+    0.5": OFF^white_audio; OFF^blue_audio; Z15 ---> S1
+
+S.S.10,                                                                                 \5kHz stimulus (R)
+S1,
+    #Z10: ON^orange_audio; SET S(I) = 2;
+    IF R(I)=1[@TRUE, @FALSE]
+        @TRUE: SET O(I) =1 ---> S2
+        @FALSE:  ---> S2
+S2,
+    0.5": OFF^orange_audio; Z16 ---> S1
+
+S.S.11,                                                                                 \12kHz stimulus (L)
+S1,
+    #Z11: ON^white_audio; ON^green_audio; ON^orange_audio; SET S(I) = 3;
+    IF R(I)=1[@TRUE, @FALSE]
+        @TRUE: SET J(I) = 1 ---> S2
+        @FALSE: ---> S2
+S2,
+    0.5": OFF^white_audio; OFF^green_audio; OFF^orange_audio; Z15 ---> S1
+
+S.S.12,                                                                                 \9kHz stimulus (R)
+S1,
+    #Z12: ON^orange_audio; ON^blue_audio; ON^white_audio; SET S(I) = 4;
+    IF R(I)=1[@TRUE,@FALSE]
+        @TRUE: SET O(I) = 1 ---> S2
+        @FALSE: ---> S2
+S2,
+    0.5": OFF^orange_audio; OFF^blue_audio; OFF^white_audio; Z16 ---> S1
+
+S.S.13,                                                                                 \15kHz stimlus (L)
+S1,
+    #Z13: ON^blue_audio; ON^green_audio; ON^orange_audio; SET S(I) = 5;
+    IF R(I)=1[@TRUE, @FALSE]
+        @TRUE: SET J(I) = 1 ---> S2
+        @FALSE: ---> S2
+S2,
+    0.5": OFF^blue_audio; OFF^green_audio; OFF^orange_audio; Z15 ---> S1
+
+S.S.14,                                                                                 \20 kHz stimulus (R)
+S1,
+    #Z14: ON^blue_audio; ON^green_audio; ON^orange_audio; ON^white_audio; SET S(I) = 6;
+    IF R(I)=1[@TRUE,@FALSE]
+        @TRUE: SET O(I) = 1 ---> S2
+        @FALSE: ---> S2
+S2,
+    0.5": OFF^blue_audio; OFF^green_audio; OFF^orange_audio; OFF^white_audio; Z16 ---> S1
+
+S.S.15,                                        \left stimuli reward state set
+S1,
+    #Z15: IF J(I) = 1[@TRUE,@FALSE]            \LEFT SIDED SOUND IDENTIFIER - ONLY GETS SET IF R=1
+        @TRUE: ---> S2
+        @FALSE: IF J(I) = 2[@TRUE,@FALSE]        \LEFT SIDED LIGHT IDENTIFIER - ONLY GETS SET IF R = 2
+            @TRUE: ---> S2
+            @FALSE: ---> SX
+S2,
+    #R^left_NP: ON^left_reward; SET K(I) = 2; SET C(I) = T; SET D(I) = (C(I) - E(I)); ADD G(0); SHOW 4, Rewards Given, G(0); ADD G(1);
+    IF V=0 [@TRUE,@FALSE]
+        @TRUE: SET H(I) = 1 ---> S3
+        @FALSE: IF V =1 [@TRUE,@FALSE]
+            @TRUE: SET H(I) =3 ---> S3
+            @FALSE: IF V=2 [@TRUE,@FALSE]
+                @TRUE: SET H(I) =5 ---> S3
+                @FALSE: IF V=3 [@TRUE,@FALSE]
+                   @TRUE: SET H(I) =7 --->S3
+                   @FALSE: IF V=4[@TRUE,@FALSE]
+                       @TRUE: SET H(I)=9 ---> S3
+                       @FALSE: IF V=5 [@TRUE,@FALSE]
+                           @TRUE: SET H(I)= 11 ---> S3
+                           @FALSE: IF V=6 [@TRUE, @FALSE]
+                               @TRUE: SET H(I) = 13 ---> S3
+                               @FALSE: IF V=7 [@TRUE, @FALSE]
+                                   @TRUE: SET H(I) = 15 ---> S3
+                                   @FALSE: ---> S1
+
+
+    #R^right_NP: SET K(I) = 1; SET C(I) = T; SET D(I) = (C(I) - E(I)); ADD W(0); SHOW 5, Incorrect Responses, W(0); ADD W(1);
+    IF V=0[@TRUE,@FALSE]
+        @TRUE: SET H(I) = 2; Z18 ---> S1
+        @FALSE: IF V =1 [@TRUE,@FALSE]
+            @TRUE: SET H(I) =4; Z18 ---> S1
+            @FALSE: IF V=2 [@TRUE,@FALSE]
+                @TRUE: SET H(I) =6; Z18 ---> S1
+                @FALSE: IF V=3 [@TRUE,@FALSE]
+                   @TRUE: SET H(I) =8; Z18 --->S1
+                   @FALSE: IF V=4[@TRUE,@FALSE]
+                       @TRUE: SET H(I)=10; Z18 ---> S1
+                       @FALSE: IF V=5 [@TRUE,@FALSE]
+                           @TRUE: SET H(I)=12; Z18 ---> S1
+                           @FALSE: IF V = 6[@TRUE, @FALSE]
+                               @TRUE: SET H(I) = 14; Z18 ---> S1
+                               @FALSE: IF V =7[@TRUE,@FALSE]
+                                   @TRUE: SET H(I) = 26; Z18 ---> S1
+                                   @FALSE: ---> S1
+
+    10": Z19 ---> S1
+S3,
+    1": OFF^left_reward; Z20 ---> S1
+
+S.S.16,                                         \right stimuli reward state set
+S1,
+    #Z16: IF O(I) = 1[@TRUE,@FALSE]            \RIGHT SIDED SOUND IDENTIFIER - ONLY GETS SET TO 1 IF R = 1
+        @TRUE: ---> S2
+        @FALSE: IF O(I)=2[@TRUE,@FALSE]        \RIGHT SIDED LIGHT IDENTIFIER - ONLY GETS SET TO 1 IF  R = 2
+            @TRUE: ---> S2
+            @FALSE: ---> SX
+S2,
+   #R^right_NP: ON^right_reward; SET K(I) = 2; SET C(I) = T; SET D(I) = (C(I) - E(I)); ADD G(0); SHOW 4, Rewards Given, G(0); ADD G(2);
+   IF V=0 [@TRUE,@FALSE]
+        @TRUE: SET H(I) = 1 ---> S3
+        @FALSE: IF V =1 [@TRUE,@FALSE]
+            @TRUE: SET H(I) =3 ---> S3
+            @FALSE: IF V=2 [@TRUE,@FALSE]
+                @TRUE: SET H(I) =5 ---> S3
+                @FALSE: IF V=3 [@TRUE,@FALSE]
+                   @TRUE: SET H(I) =7 --->S3
+                   @FALSE: IF V=4[@TRUE,@FALSE]
+                       @TRUE: SET H(I)=9 ---> S3
+                       @FALSE: IF V=5 [@TRUE,@FALSE]
+                           @TRUE: SET H(I) = 11 ---> S3
+                           @FASLE: IF V=6 [@TRUE, @FALSE]
+                               @TRUE: SET H(I) = 13 ---> S3
+                               @FALSE: IF V = 7[@TRUE, @FALSE]
+                                   @TRUE: SET H(I) = 15 ---> S3
+                                   @FALSE: ---> S1
+
+   #R^left_NP: SET K(I) = 1; ADD W(0); SHOW 5, Incorrect Responses, W(0); ADD W(2); SET C(I) = T;  SET D(I) = (C(I) - E(I));
+   IF V=0 [@TRUE,@FALSE]
+       @TRUE: SET H(I) = 2; Z18 ---> S1
+       @FALSE: IF V =1 [@TRUE,@FALSE]
+           @TRUE: SET H(I) =4; Z18 ---> S1
+           @FALSE: IF V=2 [@TRUE,@FALSE]
+               @TRUE: SET H(I) =6; Z18 ---> S1
+               @FALSE: IF V=3 [@TRUE,@FALSE]
+                   @TRUE: SET H(I) =8; Z18 ---> S1
+                   @FALSE: IF V=4[@TRUE,@FALSE]
+                       @TRUE: SET H(I)=10; Z18 ---> S1
+                       @FALSE: IF V=5 [@TRUE, @FALSE]
+                           @TRUE: SET H(I) = 12; Z18 ---> S1
+                           @FALSE: IF V =6[@TRUE, @FALSE]
+                               @TRUE: SET H(I) = 14; Z18 ---> S1
+                               @FALSE: IF V=7[@TRUE,@FALSE]
+                                   @TRUE: SET H(I) = 16; Z18 ---> S1
+                                   @FALSE: ---> S1
+
+    10": Z19 ---> S1
+S3,
+    1": OFF^right_reward; Z20 ---> S1
+
+S.S.17,                                         \Main loop ITI and trial initiation
+S1,
+    #Z17: ON^house_light; ADD I; SHOW 2, Trial Index, I; ADD Q(1);
+    IF V=0 [@TRUE,@FALSE]
+        @TRUE: SET R(I) = 2 ---> S2
+        @FALSE: IF V = 1[@TRUE, @FALSE]
+            @TRUE: SET R(I) = 2 ---> S2
+            @FALSE: IF V=2[@TRUE,@FALSE]
+                @TRUE: SET R(I) = 1 ---> S2
+                @FALSE: IF V = 3[@TRUE,@FALSE]
+                    @TRUE: SET R(I) = 1 ---> S2
+                    @FALSE: IF V=4[@TRUE,@FALSE]
+                        @TRUE: SET R(I) = 2 ---> S2
+                        @FALSE: IF V = 5[@TRUE,@FALSE]
+                            @TRUE: SET R(I) = 2 ---> S2
+                            @FALSE: IF V =6[@TRUE,@FALSE]
+                                @TRUE: SET R(I) = 1 ---> S2
+                                @FALSE: IF V=7[@TRUE,@FALSE]
+                                    @TRUE: SET R(I) = 1 ---> S2
+                                    @FALSE: IF V=8[@TRUE,@FALSE]
+                                        @TRUE: SET R(I) = 2 ---> S2
+                                        @FALSE: ---> SX
+S2,
+    5": OFF^house_light ---> S3
+S3,
+    #R^center_NP: Z21 ---> S1
+
+    10": Z20; ADD N; SHOW 3, No initiation, N ---> S1
+
+S.S.18,                                        \Incorrect response, timeout state set
+S1,
+    #Z18: ON^house_light ---> S2
+S2,
+    10": Z20 ---> S1
+
+S.S.19,                                         \No response state set
+S1,
+    #Z19: ADD M; SHOW 6, Missed Response, M; Z20 ---> SX
+
+S.S.20,
+S1,
+    #Z20: IF Q(1) >= A(5) [@TRUE, @FALSE]
+        @TRUE: SET Q(2) = Q(1) - 7; SUMARRAY Q(0) = K, Q(2), Q(1); SHOW 8, Accuracy, Q(0); IF Q(0) >= A(4) [@TRUE, @FALSE]
+            @TRUE: ADD V; SHOW 9, Attentional Set, V; ZEROARRAY K; Z23 ---> SX
+            @FALSE: Z17 ---> SX
+        @FALSE: SET Q(2) = Q(1) - 7; SUMARRAY Q(0) = K, Q(2), Q(1); SHOW 8, Accuracy, Q(0); Z17 ---> SX
+S.S.21,                                        \Stimulus pair randomizer
+S1,
+    #Z21: RANDD F(I) = Z;
+        IF F(I) = 1[@TRUE, @FALSE]
+            @TRUE: Z(A(0)); Z(A(1)) ---> SX
+            @FALSE: IF F(I) = 2[@TRUE, @FALSE]
+                @TRUE: Z(A(0)); Z(A(3)) ---> SX
+                @FALSE: IF F(I) = 3[@TRUE, @FALSE]
+                    @TRUE: Z(A(1)); Z(A(2)) ---> SX
+                    @FALSE: IF F(I) = 4[@TRUE, @FALSE]
+                        @TRUE: Z(A(2)); Z(A(3)) ---> SX
+                        @FALSE: SET C(I) = -987.987; SET D(I) = -987.987; SET E(I) = -987.987; SET F(I) = -987.987; SET H(I) = -987.987; SET J(I)=-987.987;
+                SET K(I)=-987.987; SET L(I)=-987.987; SET O(I)=-987.987; SET P(I) = -987.987; SET S(I) = -987.987; SET R(I) = -987.987---> STOPSAVE
+
+S.S.23,                                    \After criterion is reached, randomize stimuli
+S1,
+    #Z23: ON^house_light; ADD I; ADD Q(1);
+    IF V=0 [@TRUE,@FALSE]
+        @TRUE: SET R(I) = 2 ---> S2
+        @FALSE: IF V = 1[@TRUE, @FALSE]
+            @TRUE: SET R(I) = 2 ---> S2
+            @FALSE: IF V=2[@TRUE,@FALSE]
+                @TRUE: SET R(I) = 1 ---> S2
+                @FALSE: IF V = 3[@TRUE,@FALSE]
+                    @TRUE: SET R(I) = 1 ---> S2
+                    @FALSE: IF V=4[@TRUE,@FALSE]
+                        @TRUE: SET R(I) = 2 ---> S2
+                        @FALSE: IF V = 5[@TRUE,@FALSE]
+                            @TRUE: SET R(I) = 2 ---> S2
+                            @FALSE: IF V =6[@TRUE,@FALSE]
+                                @TRUE: SET R(I) = 1 ---> S2
+                                @FALSE: IF V=7[@TRUE,@FALSE]
+                                    @TRUE: SET R(I) =1 ---> S2
+                                    @FALSE: IF V=8[@TRUE, @FALSE]
+                                        @TRUE: SET R(I) = 2 ---> S2
+                                        @FALSE: ---> SX
+S2,
+    5": OFF^house_light ---> S3
+S3,
+    #R^center_NP: Z2 ---> S1                    \Go to randomization state for a new stimulus set
+
+    10": Z23; ADD N; SHOW 3, No init, N ---> S1
+
+
+
+S.S.24,                                          \Session timer
+S1,
+    #START: SET A(6) = 4500 ---> S2
+S2,
+    0.01": SET T = T + 0.01; SHOW 1, Session Timer, T;
+    IF T >= A(6) [@TRUE,@FALSE]
+        @TRUE:  IF I > 1000[@TRUE,@FALSE]
+            @TRUE: ---> SX
+            @FALSE: SET C(I) = -987.987; SET D(I) = -987.987; SET E(I) = -987.987; SET F(I) = -987.987; SET H(I) = -987.987; SET J(I)=-987.987;
+                SET K(I)=-987.987; SET L(I)=-987.987; SET O(I)=-987.987; SET P(I) = -987.987; SET S(I) = -987.987; SET R(I) = -987.987 ---> STOPSAVE
+        @FALSE: ---> SX
+
+S.S.25,
+S1,
+    #START: IF V >= 9 [@TRUE, @FALSE]
+        @TRUE: SET C(I) = -987.987; SET D(I) = -987.987; SET E(I) = -987.987; SET F(I) = -987.987; SET H(I) = -987.987; SET J(I)=-987.987;
+                SET K(I)=-987.987; SET L(I)=-987.987; SET O(I)=-987.987; SET P(I) = -987.987; SET S(I) = -987.987; SET R(I) = -987.987 ---> STOPSAVE
+        @FALSE: ---> SX

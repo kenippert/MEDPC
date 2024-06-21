@@ -1,0 +1,174 @@
+\MED-PC Code
+\Level SIMPLE DISCRIMINATION (SD) LIGHT
+\Simple discrimination (SD) task between last two exposed stimuli until proficiency is reached
+\the stimuli are GREEN light and PURPLE light
+\Criterion for proficiency is 8 out of the last 10 trials correct (80%)
+
+\INPUTS
+^left_NP = 1
+^center_NP = 2
+^right_NP = 3
+
+\OUTPUTS
+^center_port_light = 1
+^house_light = 2
+^house_tone = 3
+^right_reward = 4
+^left_reward = 5
+^white_audio = 13
+^blue_audio = 14
+^green_audio = 15
+^orange_audio = 16
+^red_light = 17
+^yellow_light = 18
+^green_light = 19
+^blue_light = 21
+^white_light = 22
+^purple_light = 23
+
+\Variables
+\A = List for randomization
+\C = Rewards collected
+    \C(0) = total reward collected
+    \C(1) = left reward collected
+    \C(2) = right reward collected
+\D = Duration of nosepoke holds (array, in milliseconds)
+\E = Head entry time stamps (array of times, used to calculate nosepoke duration)
+\H = hold duration
+\M = Number of missed trials where stimuli was given and no response was made
+\G = Rewards given counter
+    \G(0) = Total rewards given
+    \G(1) = left reward given
+    \G(2) = right reward given
+\I = Trial index (subscript of arrays)
+\L= Leaving time stamp (array of times used to calculate nosepoke duration)
+\M = no response counter (missed trial)
+    \M(0) = No response Total
+    \M(1) = No response when left stimulus was presented (20 kHz)
+    \M(2) = No response when right stimulus was presented (15 kHz)
+\N = No trial initiation counter
+\P = Port identifier (1 = left port, 2 = right reward port, 0 = center NP)
+\T = Session timer
+\K  = Response classification (list of when a response occurred, 1 = During trial, 2 = intertrial interval)
+\W = incorrect response
+    \W(0) = Incorrect response Total
+    \w(1) = Incorrect left responses
+    \W(2) = Incorrect right responses
+
+DIM A = 2
+DIM C = 3
+LIST X = 1,2,1,1,2,2,1,1,2,2
+DIM G = 3
+DIM M = 3
+DIM W = 3
+DIM Q = 3
+DIM H = 999
+DIM K = 999
+DIM L = 999
+DIM E = 999
+DIM D = 999
+DIM P = 999
+
+
+S.S.1,                                 \Start program, initialize variables, loop
+S1,
+    #START: Z1 ---> S2
+S2,                                         \First trial becomes available
+    #Z1: ON^house_light; ADD I; SHOW 2, Trial Index, I; SET R= 2; ADD Q(1) ---> S3
+S3,
+    5": OFF^house_light ---> S4
+S4,
+    #R^center_NP: Z2 ---> S2
+    20": ADD N; SHOW 3, No initiation, N; Z1 ---> S2                           \First trial becomes available
+
+
+S.S.2,                                     \Randomize Trial
+S1,
+    #Z2: RANDD A(0) = X ---> S2
+S2,
+    0.01": IF A(0) =1[@TRUE, @FALSE]
+        @TRUE: Z3 ---> S1
+        @FALSE: Z4 ---> S1
+
+S.S.3,                                    \Green light = left trial
+S1,
+    #Z3: ON^green_light ---> S2
+S2,
+    0.5": OFF^green_light ---> S3
+S3,
+    #R^left_NP: ON^left_reward; ADD G(0); SHOW 4, Rewards given, G(0); ADD G(1); SET K(I) = 2; SET H(I) =1 ---> S4
+    #R^right_NP: SET H(I) = 2; Z5---> S1
+
+    5": Z7 ---> S1
+S4,
+    1": OFF^left_reward; Z9 ---> S1
+S.S.4,                                    \Purple right = right reward port trial
+S1,
+    #Z4: ON^purple_light ---> S2
+S2,
+    0.5": OFF^purple_light ---> S3
+S3,
+    #R^right_NP: ON^right_reward; ADD G(0); SHOW 4, Rewards given, G(0); ADD G(2); SET K(I) = 2; SET H(I) = 3 ---> S4
+    #R^left_NP: SET H(I) = 4; Z6 ---> S1
+
+    5": Z8---> S1
+S4,
+    1": OFF^right_reward; Z9 ---> S1
+
+S.S.5,                                    \Entry Moniter to check nosepokes
+S1,
+    #START: ---> S2
+S2,
+    #R^center_NP: SET P(I) = 1; SET E(I)= T ---> S3
+
+S3,
+    #R^center_NP: ---> S3
+    0.01": SET L(I) = T; SET D(I) = (L(I) - E(I)) --->S2
+
+
+S.S.6,                                      \Recording incorrect stimuli responses, with timeout
+S1,
+    #Z5: ON^house_light; ADD W(0); SHOW 5, Incorrect response, W(0); ADD W(1); SET K(I) = 1; Z9 ---> S2
+S2,
+    10": Z1 ---> S1
+
+S.S.7,                                      \Recording incorrect stimuli response, with timeout
+S1,
+    #Z6: ON^house_light; ADD W(0); SHOW 5, Incorrect response, W(0); ADD W(2); SET K(I) = 1; Z9 ---> S2
+S2,
+    10": Z1 ---> S1
+
+S.S.8,                                      \No response when stimulus+(left) was played
+S1,
+    #Z7: ADD M(0); Show 6, Missed response, M(0); ADD M(1); Z1 ---> SX
+
+S.S.9,                                      \No response when stimulus (right) was played
+S1,
+    #Z8: ADD M(0); Show 6, Missed response, M(0); ADD M(2); Z1 ---> SX
+
+
+
+S.S.10,                                  \Moving accuracy
+S1,
+    #Z9: IF Q(1) >= 10[@TRUE, @FALSE]
+        @TRUE: SET Q(2) = Q(1) - 9; SUMARRAY Q(0) = K, Q(2), Q(1);
+        SHOW 8, Accuracy, Q(0); IF Q(0) >= 18 [@TRUE, @FALSE]
+            @TRUE: Z10 ---> SX
+            @FALSE: Z1 ---> SX
+        @FALSE: SET Q(2) = Q(1) - 9; SUMARRAY Q(0) = K, Q(2), Q(1); SHOW 8, Accuracy, Q(0); Z1 ---> SX
+
+S.S.11,
+S1,
+    #Z10: SET D(I) = -987.987; SET H(I) = -987.987; SET K(I) = -987.987;
+            SET P(I) = -987.987; SET E(I) = -987.987; SET L(I) = -987.987---> STOPSAVE
+
+S.S.12,                                     \Session Timer in seconds and seal arrays
+S1,
+    #START: SET A(1) = 4500 ---> S2
+S2,
+    0.01": SET T = T + 0.01; SHOW 1, Session Timer, T; IF T >= A(1) [@TRUE,@FALSE]
+        @TRUE: IF I > 1000[@TRUE,@FALSE]
+            @TRUE: ---> SX
+            @FALSE: SET D(I) = -987.987; SET H(I) = -987.987; SET K(I) = -987.987;
+            SET P(I) = -987.987; SET E(I) = -987.987; SET L(I) = -987.987 ---> STOPSAVE
+        @FALSE: ---> SX
